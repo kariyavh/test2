@@ -36,14 +36,29 @@ binaries from GitHub releases.
 
 If GitHub Desktop or Git Bash refuse to clone because of `fork: Resource temporarily unavailable`
 messages, the issue is almost always caused by security software blocking Git from spawning new
-helper processes. Try the following remedies:
+helper processes. Try the following remedies in order:
 
-1. Close GitHub Desktop, then add the folder `C:\\Users\\<YOU>\\AppData\\Local\\GitHubDesktop\\app-*\\resources\\app\\git`
-   to your antivirus allow-list (the path holds Git's `usr\bin` and `mingw64\bin` executables).
-2. Re-open GitHub Desktop or Git Bash after a reboot so the allow-list change takes effect.
-3. If the problem continues, install the latest [Git for Windows](https://gitforwindows.org/) and run
-   `git clone https://github.com/kariyavh/test3.git` from a regular Command Prompt or PowerShell
-   window.
+1. **Allow the embedded Git binaries.** Close GitHub Desktop, then add these two folders to your antivirus
+   or Windows Security allow-list (they contain the Git executables GitHub Desktop needs to launch):
+
+   ```text
+   C:\Users\<YOU>\AppData\Local\GitHubDesktop\app-*\resources\app\git\usr\bin
+   C:\Users\<YOU>\AppData\Local\GitHubDesktop\app-*\resources\app\git\mingw64\libexec\git-core
+   ```
+
+   The second path is where GitHub Desktop calls commands such as `git-submodule`, which shows up in
+   the error screenshot.
+
+2. **Temporarily disable Controlled Folder Access** (Windows Security → Virus & threat protection →
+   Ransomware protection) or add the folder where you are cloning (for example `C:\Repos`) to the
+   allowed list. Controlled Folder Access often blocks GitHub Desktop from writing into the
+   destination folder.
+3. **Install the latest Git for Windows** from [gitforwindows.org](https://gitforwindows.org/) and use a
+   regular Command Prompt or PowerShell window to run `git clone https://github.com/kariyavh/test3.git`.
+   This bypasses the bundled GitHub Desktop binaries and frequently succeeds even when Desktop is
+   blocked.
+4. **Choose a local folder outside syncing tools** such as OneDrive or Dropbox. Those services can lock
+   files while Git is running and trigger the same error.
 
 When cloning still is not an option, grab the source directly from the repository page via
 **Code → Download ZIP** or use the automated release packages that appear on the
