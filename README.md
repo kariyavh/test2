@@ -32,6 +32,23 @@ binaries from GitHub releases.
 
    Streamlit starts a local server and opens the toolkit in your browser.
 
+### Cloning alternatives
+
+If GitHub Desktop or Git Bash refuse to clone because of `fork: Resource temporarily unavailable`
+messages, the issue is almost always caused by security software blocking Git from spawning new
+helper processes. Try the following remedies:
+
+1. Close GitHub Desktop, then add the folder `C:\\Users\\<YOU>\\AppData\\Local\\GitHubDesktop\\app-*\\resources\\app\\git`
+   to your antivirus allow-list (the path holds Git's `usr\bin` and `mingw64\bin` executables).
+2. Re-open GitHub Desktop or Git Bash after a reboot so the allow-list change takes effect.
+3. If the problem continues, install the latest [Git for Windows](https://gitforwindows.org/) and run
+   `git clone https://github.com/kariyavh/test3.git` from a regular Command Prompt or PowerShell
+   window.
+
+When cloning still is not an option, grab the source directly from the repository page via
+**Code → Download ZIP** or use the automated release packages that appear on the
+[`Releases`](https://github.com/kariyavh/test3/releases) tab.
+
 ### Using the toolkit
 
 - **Data merge tab** – upload one or more CSV/Excel files. The toolkit cleans column names, merges rows,
