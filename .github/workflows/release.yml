@@ -1,0 +1,113 @@
+name: Build and release binaries
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+
+      - name: Build Windows executable
+        shell: cmd
+        run: |
+          pyinstaller --noconfirm --clean ^
+            --add-data "office_toolkit;office_toolkit" ^
+            --name "OfficeEfficiencyToolkit" ^
+            run_app.py
+
+      - name: Create zip archive
+        shell: pwsh
+        run: |
+          Compress-Archive -Path dist/OfficeEfficiencyToolkit -DestinationPath OfficeEfficiencyToolkit-windows.zip -Force
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OfficeEfficiencyToolkit-windows
+          path: OfficeEfficiencyToolkit-windows.zip
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip3 install -r requirements.txt pyinstaller
+
+      - name: Build macOS executable
+        run: |
+          EXTRA_ARGS=""
+          if pyinstaller --help | grep -q "--target-arch"; then
+            ARCH_VALUE="${PYINSTALLER_ARCH:-universal2}"
+            EXTRA_ARGS="--target-arch ${ARCH_VALUE}"
+          else
+            echo "PyInstaller on this runner does not support universal builds; creating an architecture-specific binary."
+          fi
+          pyinstaller --noconfirm --clean \
+            --add-data "office_toolkit:office_toolkit" \
+            --name "OfficeEfficiencyToolkit" \
+            ${EXTRA_ARGS} \
+            run_app.py
+
+      - name: Create zip archive
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent "dist/OfficeEfficiencyToolkit" "OfficeEfficiencyToolkit-macos.zip"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OfficeEfficiencyToolkit-macos
+          path: OfficeEfficiencyToolkit-macos.zip
+
+  release:
+    needs:
+      - build-windows
+      - build-macos
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+
+      - name: Display downloaded files
+        run: ls -R
+        working-directory: release-assets
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Office Efficiency Toolkit ${{ github.ref_name }}
+          body: |
+            Automated release for Office Efficiency Toolkit.
+            This build includes packaged binaries for Windows and macOS generated from the tagged commit.
+          files: |
+            release-assets/OfficeEfficiencyToolkit-windows/OfficeEfficiencyToolkit-windows.zip
+            release-assets/OfficeEfficiencyToolkit-macos/OfficeEfficiencyToolkit-macos.zip
